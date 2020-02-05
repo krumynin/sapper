@@ -1,0 +1,167 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+
+    <table>
+        <tbody>
+            {% for i in 0..(field_view.vertical - 1) %}
+                <tr>
+                    {% for j in 0..(field_view.horizontal - 1) %}
+                        <td>
+                            <button class="border border-danger btn {% if field_view.data[j][i]['clicked'] %}btn-light{% else %}btn-dark{% endif %} btn-lg button-cell" data-horizontal="{{ j }}" data-vertical="{{ i }}" data-field_id="{{ field_view.id }}">
+                                {% if field_view.data[j][i]['clicked'] %}
+                                    {{ field_view.data[j][i]['nearBomb'] }}
+                                {% elseif field_view.data[j][i]['marked']%}
+                                    b
+                                {% else %}
+                                    &nbsp;&nbsp;
+                                {% endif %}
+                            </button>
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="col text-left ">
+        <a href="{{ path('create') }}" class="btn btn-outline-primary">
+            Start new game
+        </a>
+        <a  class="btn btn-outline-primary">
+            Refresh field
+        </a>
+        <a href="{{ path('settings', {'id':field_view.id}) }}"
+                {% for i in 0..(field_view.vertical - 1) %}
+                    {% for j in 0..(field_view.horizontal - 1) %}
+                        {% if field_view.data[j][i]['clicked'] %} hidden {% endif %}
+                    {% endfor %}
+                {% endfor %}
+            id="settings" class="btn btn-outline-primary">
+            settings
+        </a>
+        <a href="{{ path('statistics') }}" class="btn btn-outline-primary">
+            statistics
+        </a>
+    </div>
+
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+<script>
+    $(function () {
+        var button = $('.button-cell'); // Здесь я присваиваю элемент с таким классом переменной button
+        document.oncontextmenu = function() {return false;};
+
+        button.mousedown(function(e){
+            var x = $(this).data('horizontal');
+            var y = $(this).data('vertical');
+            var id = $(this).data('field_id');
+            var element =  $(this);
+
+            if( e.button == 2 ) {
+                $.ajax({
+                    type: "POST",
+                    url: 'markBomb/' + id,
+                    data: {
+                        x: x,
+                        y: y,
+                    },
+                    success: function () {
+                        // alert('ok')
+                    }
+                });
+
+                if (element.text() == 'b') {
+                    element.text("\u00A0\u00A0 " );
+                } else {
+                    element.text('b');
+                }
+
+                return false;
+            }
+
+            return true;
+        });
+
+        var timeoutId;
+
+        button.click(function (e)    // Здесь на button мы навешиваем событие click
+        {
+            $('#settings').attr("hidden",true);
+
+            var elem = $(this);
+            timeoutId = setTimeout(function ()
+            {
+                var x = elem.data('horizontal');
+                var y = elem.data('vertical');
+                var id = elem.data('field_id');
+
+                $.ajax({
+                    type: "POST",
+                    url: 'click/' + id,
+                    data: {
+                        x: x,
+                        y: y,
+                    },
+                    success: function(data) {
+                        if (data['finishedAt']) {
+                            delete data['finishedAt'];
+                            draw(data);
+                            alert('YouWin');
+                        } else if (data['bomb']) {
+                            delete data['bomb'];
+                            draw(data);
+                            alert('sorry, game over');
+                        } else {
+                            draw(data);
+                        }
+                    }
+                });
+            }, 400);
+        }).dblclick(function(e)
+        {
+            // alert('dblclick');
+            // clearTimeout(timeoutId);
+            clearTimeout(timeoutId);
+            clearTimeout(timeoutId - 1);
+            console.log('Dblclick');
+            var x = $(this).data('horizontal');
+            var y = $(this).data('vertical');
+            var id = $(this).data('field_id');
+            $.ajax({
+                type: "POST",
+                url: 'dbClick/' + id,
+                data: {
+                    x: x,
+                    y: y,
+                },
+                success: function (data) {
+                    draw(data);
+                    // alert('ok');
+                }
+            });
+
+
+        });
+
+    });
+
+    function draw(data) {
+        for (var x in data) {
+            for (var y in data[x]) {
+                var btn = $('.button-cell[data-horizontal="' + x + '"][data-vertical="' + y + '"]');
+                if (data[x][y]['bomb']) {
+                    btn.text('b');
+                } else {
+                    btn.text(data[x][y]['nearBomb']);
+                    btn.removeClass('btn-dark');
+                    btn.addClass('btn-light');
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+old_sound_rabbit_mq:
+    connections:
+        default:
+            url: 'amqp://guest:guest@localhost:5672'
+            vhost: '/'
+            lazy: true
+            connection_timeout: 3
+            read_write_timeout: 3
+            keepalive: false
+            heartbeat: 0
+    producers:
+        send_email:
+            connection:       default
+            exchange_options: { name: 'notification.v1.send_email', type: direct }
+
+    consumers:
+        send_email:
+            connection:       default
+            exchange_options: { name: 'notification.v1.send_email', type: direct }
+            queue_options:    { name: 'notification.v1.send_email' }
+            callback:         app.consumer.mail_sender

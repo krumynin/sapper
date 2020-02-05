@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>View list of fields </h1>
+
+    <table class = "table table-striped table-bordered table-sm">
+        <thead class = "thead-dark">
+            <tr>
+                <th scope="col">id</th>
+                <th scope="col">x</th>
+                <th scope="col">y</th>
+                <th scope="col">b</th>
+                <th scope="col">createdAt</th>
+                <th scope="col">finishedAt</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for fields in all_fields %}
+                <tr>
+                    <th><a href="{{ path('game',{'id':fields.id })}}">
+                        {{fields.id}}</a></th>
+                    <td> {{fields.horizontal}} </td>
+                    <td> {{fields.vertical}} </td>
+                    <td> {{fields.bombAmount}} </td>
+                    <td> {{fields.createdAt|date("F jS \\a\\t g:ia") }} </td>
+                    <td> {{fields.finishedAt|date("F jS \\a\\t g:ia") }} </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+
+
+{% endblock %}
